@@ -127,9 +127,9 @@ def add_users():
         print("Ваш ревьювер " + str(random_users[0].id) + "и " + str(random_users[1].id))
         sys.stdout.flush()
     else:
-        print("Что-то пошло не так - напиши Гуле")
+        print("Что-то пошло не так - напиши Денису")
         sys.stdout.flush()
-    return "OK"
+    return "SUCCESS"
 
 
 @flask_app.route("/back_vacation", methods=["GET"])
