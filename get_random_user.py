@@ -107,9 +107,6 @@ def get_random_reviewer(current_user_id):
     current_user = get_current_user(current_user_id)
     current_user_group = current_user.group
 
-    if current_user.command.decode('utf-8') == "automation":
-        return get_three_random_reviewer(current_user_id)
-
     if not reviews:
         reviews = copy.deepcopy(get_all_reviwers(current_user.command))
     if not reviews:
