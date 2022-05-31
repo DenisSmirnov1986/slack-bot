@@ -9,6 +9,7 @@ from flask import Flask, request
 from slack_bolt.adapter.flask import SlackRequestHandler
 import sys
 import secrets
+import re
 
 # Slack bolt - wtf
 app = App(
@@ -22,6 +23,23 @@ client = WebClient(token=os.environ.get("SLACK_BOT_TOKEN", ""))
 def get_user_info(user_id):
     result = client.users_info(user=user_id)
     return result["user"]["profile"]["display_name"]
+
+def parseParameters(text):
+    results = re.findall(r'[\w]*:', text)
+    parameterDict = {}
+    for i in range(len(results)):
+        result = results[i]
+        key = result[:-1]
+        index = text.find(result)
+        nextIndex = len(text)
+        if i + 1 < len(results):
+            nextResult = results[i + 1]
+            nextIndex = text.find(nextResult)
+        start = index + len(result)
+        end = int(nextIndex)
+        value = text[start : end]
+        parameterDict[key] = value
+    return parameterDict
 
 def get_user_info_by_login(user_login):
     result = client.users_list()
@@ -54,7 +72,7 @@ def random_user_generator(ack, say, command):
             say(
                 f"{name} Ваш ревьювер <@{random_users[0].id}> и <@{random_users[1].id}> и <@{random_users[2].id}> 🤘")
     else:
-        say(f"{name} Что-то пошло не так - напиши Гуле")
+        say(f"{name} Что-то пошло не так - напиши Денису")
 
 
 @app.command("/all_users")
@@ -69,10 +87,12 @@ def all_users(ack, say, command):
 def random_user_generator(ack, say, command):
     ack()
     name = get_user_info(command["user_id"])
-    group = command["text"].casefold().strip()
-    create_reviewer(command["user_id"], name, group, "ios", "")
-    say(f"{name} Вы успешно добавлены как ревьювер")
-
+    parameters = parseParameters(command["text"])
+    stream = parameters.get("stream","none").casefold().strip()
+    team = parameters.get("team", "ios").casefold().strip()
+    email = parameters.get("email", "").casefold().strip()
+    create_reviewer(command["user_id"], name, stream, team, email)
+    say(f"{name} Вы успешно добавлены как ревьювер. Стрим {stream}; команда {team}")
 
 @app.command("/on_vacation")
 def on_vacation(ack, say, command):
@@ -111,30 +131,16 @@ def slack_events():
 
 @flask_app.route("/users", methods=["GET"])
 def users():
-    # mark_reviewer("U019J0X8SPL", "False")
-    # mark_reviewer("U02K30PE0Q0", "False")
-    # group, command, email
-    # create_reviewer("U01UD64D85V", "", "credits", "android", "vladlen_kudriavtsev@epam.com")
-    mark_reviewer("U01EWKGHE1Y", "False")
-    # add_email("U02571MS3D1", "MTatarenkov@luxoft.com")
     return "OK"
 
 
 @flask_app.route("/add_users", methods=["GET"])
 def add_users():
-    random_users = get_random_reviewer("UQ212SH42")
-    if len(random_users) == 2:
-        print("Ваш ревьювер " + str(random_users[0].id) + "и " + str(random_users[1].id))
-        sys.stdout.flush()
-    else:
-        print("Что-то пошло не так - напиши Денису")
-        sys.stdout.flush()
-    return "SUCCESS"
+    return "OK"
 
 
 @flask_app.route("/back_vacation", methods=["GET"])
 def back_vacation():
-    mark_reviewer("U029VP39JTU", "False")
     return "OK"
 
 
